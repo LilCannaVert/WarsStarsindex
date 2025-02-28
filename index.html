@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Adventure</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            background: radial-gradient(circle, #001f3f, #001030);
+        }
+        #score, #lives, #distance {
+            position: absolute;
+            top: 20px;
+            color: white;
+            font-size: 24px;
+            z-index: 10;
+        }
+        #score {
+            left: 20px;
+        }
+        #lives {
+            left: 200px;
+        }
+        #distance {
+            left: 400px;
+        }
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: block;
+            z-index: 100;
+        }
+        #menu button {
+            padding: 10px 20px;
+            margin: 10px;
+            background: cyan;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #menu button:hover {
+            background: lightblue;
+        }
+        #shootButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 0, 0, 0.5);
+            border: 2px solid red;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: none;
+            z-index: 100;
+            touch-action: none;
+        }
+        @media (max-width: 768px) {
+            #shootButton {
+                display: block;
+            }
+            #score, #lives, #distance {
+                font-size: 18px;
+            }
+            #lives {
+                left: 120px;
+            }
+            #distance {
+                left: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="lives">Lives: 3</div>
+    <div id="distance">Distance: 0</div>
+    <div id="menu">
+        <h1 id="menuTitle">Space Adventure</h1>
+        <button id="startButton">Start</button>
+        <button id="statsButton">Statistics</button>
+        <button id="shopButton">Shop</button>
+    </div>
+    <button id="shootButton">Fire</button>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const shootButton = document.getElementById('shootButton');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Load all images
+        const shipImage = new Image();
+        const meteorImage = new Image();
+        const laserImage = new Image();
+        const bonusImage = new Image();
+        const goldBonusImage = new Image();
+        
+        shipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicructrrwqrc35uwcw4gxsqmin7j36kr4e5526itxftviduoncbd4';
+        meteorImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicz3tpzoa4ivu3vvqeimlxosdmujtnucsepcb6datpdo2dkx2v5mq';
+        laserImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicsgjm2xzh7c5u65rcy6zaxbxbtzzotyruubabwqhfvxcf6prsiei';
+        bonusImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreifypgmjawffyw4ybii4vz3dpownbms5f35bidwujqvcabfknshima';
+        goldBonusImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreifdzru2ygtpjknpwozh6u4upkanntutsqhtbatw4c7gerk3u7pci4';
+
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let distance = 0;
+        let laserStartTime = 0;
+        let laserInterval = 150;
+        let laserTimer = 0;
+        let shopCurrency = 0;
+        let stats = [];
+        let speed = 3;
+        let touchX = null;
+        let touchY = null;
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            width: 60,
+            height: 60,
+            speed: 10,
+            dx: 0,
+            dy: 0
+        };
+
+        const obstacles = [];
+        const bonuses = [];
+        const stars = [];
+        const starCount = 100;
+        let lasers = [];
+        let laserShotsCount = 0;
+        const totalLaserShots = 100;
+        const laserShootInterval = 50;
+
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2,
+                speed: Math.random() * 2 + 1
+            });
+        }
+
+        function createObstacle() {
+            const size = Math.random() * 50 + 20;
+            obstacles.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed,
+                rotation: Math.random() * Math.PI * 2
+            });
+        }
+
+        function createBonus(type = "regular") {
+            const size = type === "laser" ? 30 : 20;
+            bonuses.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: 3,
+                type
+            });
+        }
+
+        function drawStars() {
+            stars.forEach(star => {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            ctx.drawImage(shipImage, -player.width / 2, -player.height / 2, player.width, player.height);
+            ctx.restore();
+        }
+
+        function drawObstacles() {
+            obstacles.forEach((obstacle, index) => {
+                ctx.save();
+                ctx.translate(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
+                obstacle.rotation += 0.02;
+                ctx.rotate(obstacle.rotation);
+                ctx.drawImage(meteorImage, -obstacle.width / 2, -obstacle.height / 2, obstacle.width, obstacle.height);
+                ctx.restore();
+
+                obstacle.y += obstacle.speed;
+
+                if (obstacle.y > canvas.height) obstacles.splice(index, 1);
+
+                if (
+                    player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y + player.height > obstacle.y
+                ) {
+                    lives--;
+                    obstacles.splice(index, 1);
+                    if (lives <= 0) endGame();
+                }
+            });
+        }
+
+        function shootLaser() {
+            const laser = {
+                x: player.x + player.width / 2 - 5,
+                y: player.y - 20,
+                width: 10,
+                height: 20,
+                speed: 10
+            };
+            lasers.push(laser);
+        }
+
+        function handleLasers() {
+            lasers.forEach((laser, index) => {
+                laser.y -= laser.speed;
+
+                if (laser.y < -laser.height) {
+                    lasers.splice(index, 1);
+                    return;
+                }
+
+                ctx.drawImage(laserImage, laser.x, laser.y, laser.width, laser.height);
+
+                obstacles.forEach((obstacle, obstacleIndex) => {
+                    if (
+                        laser.x < obstacle.x + obstacle.width &&
+                        laser.x + laser.width > obstacle.x &&
+                        laser.y < obstacle.y + obstacle.height &&
+                        laser.y + laser.height > obstacle.y
+                    ) {
+                        obstacles.splice(obstacleIndex, 1);
+                        lasers.splice(index, 1);
+                        score += 20;
+                    }
+                });
+            });
+        }
+
+        function drawBonuses() {
+            bonuses.forEach((bonus, index) => {
+                const bonusImg = bonus.type === "laser" ? goldBonusImage : bonusImage;
+                ctx.drawImage(bonusImg, bonus.x, bonus.y, bonus.width, bonus.height);
+
+                bonus.y += bonus.speed;
+
+                if (bonus.y > canvas.height) bonuses.splice(index, 1);
+
+                if (
+                    player.x < bonus.x + bonus.width &&
+                    player.x + player.width > bonus.x &&
+                    player.y < bonus.y + bonus.height &&
+                    player.y + player.height > bonus.y
+                ) {
+                    if (bonus.type === "laser") {
+                        startLaserShots();
+                    } else {
+                        shopCurrency++;
+                        score += 10;
+                    }
+                    bonuses.splice(index, 1);
+                }
+            });
+        }
+
+        function startLaserShots() {
+            laserShotsCount = 0;
+            const laserShootIntervalId = setInterval(() => {
+                if (laserShotsCount < totalLaserShots) {
+                    shootLaser();
+                    laserShotsCount++;
+                } else {
+                    clearInterval(laserShootIntervalId);
+                }
+            }, laserShootInterval);
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touch) {
+                const rect = canvas.getBoundingClientRect();
+                touchX = touch.clientX - rect.left;
+                touchY = touch.clientY - rect.top;
+                
+                const targetX = touchX - player.width / 2;
+                const targetY = touchY - player.height / 2;
+                
+                player.x += (targetX - player.x) * 0.2;
+                player.y += (targetY - player.y) * 0.2;
+            }
+        }
+
+        function handleTouchEnd() {
+            touchX = null;
+            touchY = null;
+        }
+
+        function movePlayer() {
+            if (!touchX) {
+                player.x += player.dx;
+                player.y += player.dy;
+            }
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+        }
+
+        function endGame() {
+            gameRunning = false;
+            stats.push({ score, distance });
+            document.getElementById('menu').style.display = 'block';
+            document.getElementById('menuTitle').innerText = 'Game Over';
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawStars();
+            drawPlayer();
+            drawObstacles();
+            drawBonuses();
+            movePlayer();
+            handleLasers();
+
+            distance += 0.1;
+            document.getElementById('distance').innerText = `Distance: ${Math.floor(distance)}`;
+            document.getElementById('score').innerText = `Score: ${score}`;
+            document.getElementById('lives').innerText = `Lives: ${lives}`;
+
+            if (distance > 500 && distance <= 1000) {
+                speed = 4;
+            } else if (distance > 1000) {
+                speed = 5;
+            }
+
+            if (Math.random() < 0.05) {
+                createObstacle();
+            }
+
+            if (Math.random() < 0.03) {
+                createBonus("regular");
+            }
+
+            if (Math.random() < 0.01) {
+                createBonus("laser");
+            }
+
+            if (gameRunning) {
+                requestAnimationFrame(update);
+            }
+        }
+
+        function startGame() {
+            gameRunning = true;
+            score = 0;
+            lives = 3;
+            distance = 0;
+            obstacles.length = 0;
+            bonuses.length = 0;
+            lasers.length = 0;
+            createObstacle();
+            createBonus("laser");
+            document.getElementById('menu').style.display = 'none';
+            update();
+        }
+
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', handleTouchEnd);
+
+        shootButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) {
+                shootLaser();
+            }
+        });
+
+        document.getElementById('startButton').addEventListener('click', startGame);
+
+        document.getElementById('statsButton').addEventListener('click', () => {
+            alert(stats.map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}`).join('\n'));
+        });
+
+        document.getElementById('shopButton').addEventListener('click', () => {
+            alert(`Shop Currency: ${shopCurrency}`);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') player.dx = -player.speed;
+            if (e.key === 'ArrowRight') player.dx = player.speed;
+            if (e.key === 'ArrowUp') player.dy = -player.speed;
+            if (e.key === 'ArrowDown') player.dy = player.speed;
+            if (e.key === ' ') shootLaser();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') player.dy = 0;
+        });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - 100;
+        });
+    </script>
+</body>
+</html>

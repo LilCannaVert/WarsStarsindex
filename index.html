@@ -17,22 +17,25 @@
         }
         #score, #lives, #distance, #enemies {
             position: absolute;
-            top: 20px;
             color: white;
             font-size: 24px;
             z-index: 10;
         }
         #score {
+            top: 20px;
+            left: 20px;
+        }
+        #enemies {
+            top: 50px;
             left: 20px;
         }
         #lives {
+            top: 20px;
             left: 300px;
         }
         #distance {
+            top: 20px;
             left: 500px;
-        }
-        #enemies {
-            left: 700px;
         }
         #menu {
             position: absolute;
@@ -109,7 +112,8 @@
                 left: 250px;
             }
             #enemies {
-                left: 350px;
+                top: 40px;
+                left: 20px;
             }
         }
         .hidden {
@@ -802,12 +806,16 @@
                 return;
             }
 
-            const statsText = stats
-                .sort((a, b) => b.score - a.score) // Сортируем по убыванию счета
-                .map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}, Enemies Destroyed: ${s.enemiesDestroyed}, Date: ${s.date}`)
+            // Сортируем статистику по убыванию счета и берем только 10 лучших результатов
+            const topStats = stats
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
+
+            const statsText = topStats
+                .map((s, index) => `${index + 1}. Score: ${s.score}, Distance: ${Math.floor(s.distance)}, Enemies: ${s.enemiesDestroyed}, Date: ${s.date}`)
                 .join('\n');
             const highScoreText = `High Score: ${gameState.highScore}`;
-            alert(`${highScoreText}\n\nGame History:\n${statsText}`);
+            alert(`${highScoreText}\n\nTop 10 Best Results:\n${statsText}`);
         });
 
         document.getElementById('shopButton').addEventListener('click', () => {

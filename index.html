@@ -643,7 +643,7 @@
                 createBonus("regular");
             }
 
-            if (Math.random() < 0.01) {
+            if (Math.random() < 0.005) {
                 createBonus("laser");
             }
 
@@ -751,7 +751,6 @@
                         ) {
                             obstacles.splice(obstacleIndex, 1);
                             lasers.splice(index, 1);
-                            score += 20;
                         }
                     });
                 }

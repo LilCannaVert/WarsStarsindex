@@ -407,6 +407,54 @@
             if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
         }
 
+        function showLoginScreen() {
+            document.getElementById('menu').style.display = 'block';
+            document.getElementById('menuTitle').innerText = 'Space Adventure';
+            document.getElementById('user-id-container').classList.remove('hidden');
+            document.getElementById('startButton').textContent = 'Start';
+            document.getElementById('startButton').classList.remove('hidden');
+            document.getElementById('startButton').onclick = startGame;
+            document.getElementById('newGameButton').classList.add('hidden');
+            document.getElementById('statsButton').classList.add('hidden');
+            document.getElementById('shopButton').classList.add('hidden');
+            document.getElementById('user-id').value = '';
+        }
+
+        function startGame() {
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter your login first!');
+                return;
+            }
+
+            // Загружаем состояние игры для пользователя
+            loadGameState(userId);
+            
+            // Показываем меню с кнопками
+            document.getElementById('menu').style.display = 'block';
+            document.getElementById('menuTitle').innerText = 'Welcome, ' + userId + '!';
+            document.getElementById('user-id-container').classList.add('hidden');
+            document.getElementById('startButton').textContent = 'Race';
+            document.getElementById('startButton').classList.remove('hidden');
+            document.getElementById('startButton').onclick = startGameplay;
+            document.getElementById('statsButton').classList.remove('hidden');
+            document.getElementById('shopButton').classList.remove('hidden');
+        }
+
+        function startGameplay() {
+            gameRunning = true;
+            score = 0; // Сбрасываем счет для новой игры
+            lives = 3; // Сбрасываем жизни для новой игры
+            distance = 0; // Сбрасываем расстояние для новой игры
+            obstacles.length = 0;
+            bonuses.length = 0;
+            lasers.length = 0;
+            createObstacle();
+            createBonus("laser");
+            document.getElementById('menu').style.display = 'none';
+            update();
+        }
+
         function endGame() {
             gameRunning = false;
             
@@ -433,39 +481,10 @@
             document.getElementById('menuTitle').innerText = 'Game Over';
             document.getElementById('user-id-container').classList.add('hidden');
             document.getElementById('startButton').classList.add('hidden');
+            document.getElementById('newGameButton').textContent = 'Restart';
             document.getElementById('newGameButton').classList.remove('hidden');
-        }
-
-        function showLoginScreen() {
-            document.getElementById('menu').style.display = 'block';
-            document.getElementById('menuTitle').innerText = 'Space Adventure';
-            document.getElementById('user-id-container').classList.remove('hidden');
-            document.getElementById('startButton').classList.remove('hidden');
-            document.getElementById('newGameButton').classList.add('hidden');
-            document.getElementById('user-id').value = '';
-        }
-
-        function startGame() {
-            const userId = document.getElementById('user-id').value.trim();
-            if (!userId) {
-                alert('Please enter your login first!');
-                return;
-            }
-
-            // Загружаем состояние игры для пользователя
-            loadGameState(userId);
-            
-            gameRunning = true;
-            score = 0; // Сбрасываем счет для новой игры
-            lives = 3; // Сбрасываем жизни для новой игры
-            distance = 0; // Сбрасываем расстояние для новой игры
-            obstacles.length = 0;
-            bonuses.length = 0;
-            lasers.length = 0;
-            createObstacle();
-            createBonus("laser");
-            document.getElementById('menu').style.display = 'none';
-            update();
+            document.getElementById('statsButton').classList.remove('hidden');
+            document.getElementById('shopButton').classList.remove('hidden');
         }
 
         function update() {
@@ -552,7 +571,13 @@
             alert(`Shop Currency: ${shopCurrency}\nHigh Score: ${gameState.highScore}`);
         });
 
-        document.getElementById('newGameButton').addEventListener('click', showLoginScreen);
+        document.getElementById('newGameButton').addEventListener('click', () => {
+            if (document.getElementById('newGameButton').textContent === 'Restart') {
+                startGameplay();
+            } else {
+                showLoginScreen();
+            }
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') player.dx = -player.speed;

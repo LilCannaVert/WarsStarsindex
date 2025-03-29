@@ -119,6 +119,91 @@
         .hidden {
             display: none !important;
         }
+        .shop-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .shop-container {
+            background: #001f3f;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .shop-currency {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #00ff00;
+        }
+        .ships-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .ship-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .ship-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+        .ship-info {
+            text-align: center;
+        }
+        .ship-info h3 {
+            margin: 0;
+            color: #00ff00;
+        }
+        .ship-info p {
+            margin: 5px 0;
+        }
+        .ship-item button {
+            background: #00ff00;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .ship-item button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .shop-container button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .ship-item {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -155,6 +240,8 @@
         const enemyShipImage = new Image();
         const explosionImage = new Image();
         const healboxImage = new Image();
+        const redShipImage = new Image();
+        const elonShipImage = new Image();
         
         shipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicructrrwqrc35uwcw4gxsqmin7j36kr4e5526itxftviduoncbd4';
         meteorImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicz3tpzoa4ivu3vvqeimlxosdmujtnucsepcb6datpdo2dkx2v5mq';
@@ -164,6 +251,8 @@
         enemyShipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeigkchachnmnilbuqxulg3avx3ewfmkfahijmy6mfj3fxam4fn2gwa';
         explosionImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreiacnhvhf7tg7z32crgyf7n7uosynnpnijpxmyseo6uonft2viutsu';
         healboxImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeig6hwmewuyvh7ln7rjjz22htfxheoesd24b45hr7yhsjwn7bclcwq';
+        redShipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeifq65shmzu3wxbwyd4vg562v2hhsablkkxb4fwoith6ln5fii4msq';
+        elonShipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeieiiqvxctwaj3oilhog3dgs5a2pl6dwh543l5by3qm7idm2kceewq';
 
         let gameRunning = false;
         let score = 0;
@@ -193,7 +282,27 @@
             distance: 0,
             shopCurrency: 0,
             stats: [],
-            highScore: 0
+            highScore: 0,
+            ownedShips: [], // Добавляем массив купленных кораблей
+            currentShip: 'default' // Добавляем текущий корабль
+        };
+
+        const ships = {
+            default: {
+                image: shipImage,
+                lives: 3,
+                cost: 0
+            },
+            redShip: {
+                image: redShipImage,
+                lives: 5,
+                cost: 200
+            },
+            elonShip: {
+                image: elonShipImage,
+                lives: 7,
+                cost: 400
+            }
         };
 
         function saveGameState() {
@@ -316,7 +425,7 @@
         function drawPlayer() {
             ctx.save();
             ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-            ctx.drawImage(shipImage, -player.width / 2, -player.height / 2, player.width, player.height);
+            ctx.drawImage(ships[gameState.currentShip].image, -player.width / 2, -player.height / 2, player.width, player.height);
             ctx.restore();
         }
 
@@ -530,7 +639,7 @@
         function startGameplay() {
             gameRunning = true;
             score = 0;
-            lives = 3;
+            lives = ships[gameState.currentShip].lives;
             distance = 0;
             obstacles.length = 0;
             bonuses.length = 0;
@@ -559,12 +668,15 @@
         function endGame() {
             gameRunning = false;
             
+            // Конвертируем весь Score в Shop Currency
+            shopCurrency += score;
+            
             // Добавляем статистику только для текущего пользователя
             if (gameState.userId !== 'default') {
                 stats.push({ 
                     score, 
                     distance,
-                    enemiesDestroyed, // Добавляем количество уничтоженных врагов
+                    enemiesDestroyed,
                     date: new Date().toLocaleDateString()
                 });
             }
@@ -643,7 +755,7 @@
                 createBonus("regular");
             }
 
-            if (Math.random() < 0.005) {
+            if (Math.random() < 0.001) { // Уменьшаем вероятность появления бокса с лазером до 0.1%
                 createBonus("laser");
             }
 
@@ -824,7 +936,7 @@
                 return;
             }
             loadGameState(userId);
-            alert(`Shop Currency: ${shopCurrency}\nHigh Score: ${gameState.highScore}`);
+            showShop();
         });
 
         document.getElementById('newGameButton').addEventListener('click', () => {
@@ -854,6 +966,61 @@
             player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height - 100;
         });
+
+        function showShop() {
+            const shopContent = `
+                <div class="shop-container">
+                    <h2>Space Shop</h2>
+                    <div class="shop-currency">Your Currency: ${shopCurrency}</div>
+                    <div class="ships-container">
+                        <div class="ship-item">
+                            <img src="${redShipImage.src}" alt="Red Ship">
+                            <div class="ship-info">
+                                <h3>Red Ship</h3>
+                                <p>Lives: 5</p>
+                                <p>Cost: 200</p>
+                                <button onclick="buyShip('redShip')" ${shopCurrency < 200 ? 'disabled' : ''}>Buy</button>
+                            </div>
+                        </div>
+                        <div class="ship-item">
+                            <img src="${elonShipImage.src}" alt="Elon Ship">
+                            <div class="ship-info">
+                                <h3>Elon Ship</h3>
+                                <p>Lives: 7</p>
+                                <p>Cost: 400</p>
+                                <button onclick="buyShip('elonShip')" ${shopCurrency < 400 ? 'disabled' : ''}>Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="closeShop()">Close</button>
+                </div>
+            `;
+
+            const shopModal = document.createElement('div');
+            shopModal.className = 'shop-modal';
+            shopModal.innerHTML = shopContent;
+            document.body.appendChild(shopModal);
+        }
+
+        function closeShop() {
+            const shopModal = document.querySelector('.shop-modal');
+            if (shopModal) {
+                shopModal.remove();
+            }
+        }
+
+        function buyShip(shipType) {
+            const ship = ships[shipType];
+            if (shopCurrency >= ship.cost) {
+                shopCurrency -= ship.cost;
+                gameState.ownedShips.push(shipType);
+                gameState.currentShip = shipType;
+                gameState.shopCurrency = shopCurrency;
+                saveGameState();
+                closeShop();
+                alert('Ship purchased successfully!');
+            }
+        }
 
         // Показываем экран логина при загрузке страницы
         showLoginScreen();

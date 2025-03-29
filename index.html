@@ -418,11 +418,6 @@
             document.getElementById('statsButton').classList.add('hidden');
             document.getElementById('shopButton').classList.add('hidden');
             document.getElementById('user-id').value = '';
-            
-            // Добавляем обработчик для закрытия клавиатуры при нажатии на любую часть экрана
-            document.addEventListener('touchstart', () => {
-                document.getElementById('user-id').blur();
-            }, { once: true });
 
             // Добавляем обработчик для клавиши Enter
             document.getElementById('user-id').addEventListener('keypress', (e) => {
@@ -432,6 +427,19 @@
                 }
             });
         }
+
+        // Добавляем обработчики для закрытия клавиатуры при любом касании экрана
+        const closeKeyboard = (e) => {
+            // Проверяем, что клик не на поле ввода логина
+            if (e.target !== document.getElementById('user-id')) {
+                document.getElementById('user-id').blur();
+            }
+        };
+        
+        document.addEventListener('touchstart', closeKeyboard);
+        document.addEventListener('touchend', closeKeyboard);
+        document.addEventListener('touchmove', closeKeyboard);
+        document.addEventListener('click', closeKeyboard);
 
         function startGame() {
             const userId = document.getElementById('user-id').value.trim();

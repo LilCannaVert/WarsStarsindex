@@ -419,10 +419,10 @@
             document.getElementById('shopButton').classList.add('hidden');
             document.getElementById('user-id').value = '';
             
-            // Добавляем обработчик для закрытия клавиатуры при нажатии на экран
-            document.getElementById('user-id').addEventListener('blur', () => {
+            // Добавляем обработчик для закрытия клавиатуры при нажатии на любую часть экрана
+            document.addEventListener('touchstart', () => {
                 document.getElementById('user-id').blur();
-            });
+            }, { once: true });
 
             // Добавляем обработчик для клавиши Enter
             document.getElementById('user-id').addEventListener('keypress', (e) => {

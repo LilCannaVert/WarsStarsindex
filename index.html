@@ -150,6 +150,7 @@
         const goldBonusImage = new Image();
         const enemyShipImage = new Image();
         const explosionImage = new Image();
+        const healboxImage = new Image();
         
         shipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicructrrwqrc35uwcw4gxsqmin7j36kr4e5526itxftviduoncbd4';
         meteorImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreicz3tpzoa4ivu3vvqeimlxosdmujtnucsepcb6datpdo2dkx2v5mq';
@@ -158,6 +159,7 @@
         goldBonusImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreifdzru2ygtpjknpwozh6u4upkanntutsqhtbatw4c7gerk3u7pci4';
         enemyShipImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeigkchachnmnilbuqxulg3avx3ewfmkfahijmy6mfj3fxam4fn2gwa';
         explosionImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafkreiacnhvhf7tg7z32crgyf7n7uosynnpnijpxmyseo6uonft2viutsu';
+        healboxImage.src = 'https://silver-perfect-barracuda-186.mypinata.cloud/ipfs/bafybeig6hwmewuyvh7ln7rjjz22htfxheoesd24b45hr7yhsjwn7bclcwq';
 
         let gameRunning = false;
         let score = 0;
@@ -177,6 +179,8 @@
         let enemyShootInterval = 500; // Уменьшаем интервал стрельбы противников до 0.5 секунды
         let lastEnemyShootTime = 0;
         let enemiesDestroyed = 0; // Добавляем счетчик уничтоженных врагов
+        let healboxes = [];
+        let lastHealboxSpawnDistance = 0;
 
         const gameState = {
             userId: 'default',
@@ -276,6 +280,17 @@
                 dx: (Math.random() - 0.5) * 2,
                 dy: 1,
                 lastShootTime: Date.now()
+            });
+        }
+
+        function createHealbox() {
+            const size = 30;
+            healboxes.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: 3
             });
         }
 
@@ -510,21 +525,21 @@
 
         function startGameplay() {
             gameRunning = true;
-            score = 0; // Сбрасываем счет для новой игры
-            lives = 3; // Сбрасываем жизни для новой игры
-            distance = 0; // Сбрасываем расстояние для новой игры
+            score = 0;
+            lives = 3;
+            distance = 0;
             obstacles.length = 0;
             bonuses.length = 0;
             lasers.length = 0;
             enemies.length = 0;
             explosions.length = 0;
-            enemiesDestroyed = 0; // Сбрасываем счетчик уничтоженных врагов
+            healboxes.length = 0;
+            enemiesDestroyed = 0;
+            lastHealboxSpawnDistance = 0;
             
-            // Сбрасываем позицию корабля в центр нижней части экрана
             player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height - 100;
             
-            // Показываем игровые элементы
             document.getElementById('score').classList.remove('hidden');
             document.getElementById('lives').classList.remove('hidden');
             document.getElementById('distance').classList.remove('hidden');
@@ -588,6 +603,7 @@
             drawBonuses();
             drawEnemies();
             drawExplosions();
+            drawHealboxes();
             movePlayer();
             handleLasers();
 
@@ -601,6 +617,12 @@
             if (Math.floor(distance) > lastEnemySpawnDistance && Math.floor(distance) % 100 === 0) {
                 createEnemy();
                 lastEnemySpawnDistance = Math.floor(distance);
+            }
+
+            // Создаем healbox каждые 150 единиц расстояния
+            if (Math.floor(distance) > lastHealboxSpawnDistance && Math.floor(distance) % 150 === 0) {
+                createHealbox();
+                lastHealboxSpawnDistance = Math.floor(distance);
             }
 
             if (distance > 500 && distance <= 1000) {
@@ -728,6 +750,30 @@
                             score += 20;
                         }
                     });
+                }
+            });
+        }
+
+        function drawHealboxes() {
+            healboxes.forEach((healbox, index) => {
+                ctx.drawImage(healboxImage, healbox.x, healbox.y, healbox.width, healbox.height);
+
+                healbox.y += healbox.speed;
+
+                if (healbox.y > canvas.height) {
+                    healboxes.splice(index, 1);
+                    return;
+                }
+
+                // Проверка столкновения с игроком
+                if (
+                    player.x < healbox.x + healbox.width &&
+                    player.x + player.width > healbox.x &&
+                    player.y < healbox.y + healbox.height &&
+                    player.y + player.height > healbox.y
+                ) {
+                    lives++;
+                    healboxes.splice(index, 1);
                 }
             });
         }

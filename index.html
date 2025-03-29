@@ -169,6 +169,7 @@
         let lastEnemySpawnDistance = 0;
         let enemyShootInterval = 500; // Уменьшаем интервал стрельбы противников до 0.5 секунды
         let lastEnemyShootTime = 0;
+        let enemiesDestroyed = 0; // Добавляем счетчик уничтоженных врагов
 
         const gameState = {
             userId: 'default',
@@ -510,6 +511,7 @@
             lasers.length = 0;
             enemies.length = 0;
             explosions.length = 0;
+            enemiesDestroyed = 0; // Сбрасываем счетчик уничтоженных врагов
             
             // Сбрасываем позицию корабля в центр нижней части экрана
             player.x = canvas.width / 2 - player.width / 2;
@@ -535,6 +537,7 @@
                 stats.push({ 
                     score, 
                     distance,
+                    enemiesDestroyed, // Добавляем количество уничтоженных врагов
                     date: new Date().toLocaleDateString()
                 });
             }
@@ -698,6 +701,7 @@
                             enemies.splice(enemyIndex, 1);
                             lasers.splice(index, 1);
                             score += 50;
+                            enemiesDestroyed++; // Увеличиваем счетчик уничтоженных врагов
                         }
                     });
 
@@ -744,7 +748,7 @@
 
             const statsText = stats
                 .sort((a, b) => b.score - a.score) // Сортируем по убыванию счета
-                .map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}, Date: ${s.date}`)
+                .map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}, Enemies Destroyed: ${s.enemiesDestroyed}, Date: ${s.date}`)
                 .join('\n');
             const highScoreText = `High Score: ${gameState.highScore}`;
             alert(`${highScoreText}\n\nGame History:\n${statsText}`);

@@ -15,7 +15,7 @@
             display: block;
             background: radial-gradient(circle, #001f3f, #001030);
         }
-        #score, #lives, #distance {
+        #score, #lives, #distance, #enemies {
             position: absolute;
             top: 20px;
             color: white;
@@ -26,10 +26,13 @@
             left: 20px;
         }
         #lives {
-            left: 200px;
+            left: 300px;
         }
         #distance {
-            left: 400px;
+            left: 500px;
+        }
+        #enemies {
+            left: 700px;
         }
         #menu {
             position: absolute;
@@ -96,14 +99,17 @@
             #shootButton {
                 display: block;
             }
-            #score, #lives, #distance {
+            #score, #lives, #distance, #enemies {
                 font-size: 18px;
             }
             #lives {
-                left: 120px;
+                left: 150px;
             }
             #distance {
-                left: 220px;
+                left: 250px;
+            }
+            #enemies {
+                left: 350px;
             }
         }
         .hidden {
@@ -115,6 +121,7 @@
     <div id="score" class="hidden">Score: 0</div>
     <div id="lives" class="hidden">Lives: 3</div>
     <div id="distance" class="hidden">Distance: 0</div>
+    <div id="enemies" class="hidden">Enemies: 0</div>
     <div id="menu">
         <h1 id="menuTitle">Space Adventure</h1>
         <div id="user-id-container">
@@ -521,6 +528,7 @@
             document.getElementById('score').classList.remove('hidden');
             document.getElementById('lives').classList.remove('hidden');
             document.getElementById('distance').classList.remove('hidden');
+            document.getElementById('enemies').classList.remove('hidden');
             document.getElementById('shootButton').classList.remove('hidden');
             
             createObstacle();
@@ -556,6 +564,7 @@
             document.getElementById('score').classList.add('hidden');
             document.getElementById('lives').classList.add('hidden');
             document.getElementById('distance').classList.add('hidden');
+            document.getElementById('enemies').classList.add('hidden');
             document.getElementById('shootButton').classList.add('hidden');
             
             document.getElementById('menu').style.display = 'block';
@@ -586,6 +595,7 @@
             document.getElementById('distance').innerText = `Distance: ${Math.floor(distance)}`;
             document.getElementById('score').innerText = `Score: ${score}`;
             document.getElementById('lives').innerText = `Lives: ${lives}`;
+            document.getElementById('enemies').innerText = `Enemies: ${enemiesDestroyed}`;
 
             // Создаем нового врага каждые 100 единиц расстояния
             if (Math.floor(distance) > lastEnemySpawnDistance && Math.floor(distance) % 100 === 0) {

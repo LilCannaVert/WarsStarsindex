@@ -418,6 +418,19 @@
             document.getElementById('statsButton').classList.add('hidden');
             document.getElementById('shopButton').classList.add('hidden');
             document.getElementById('user-id').value = '';
+            
+            // Добавляем обработчик для закрытия клавиатуры при нажатии на экран
+            document.getElementById('user-id').addEventListener('blur', () => {
+                document.getElementById('user-id').blur();
+            });
+
+            // Добавляем обработчик для клавиши Enter
+            document.getElementById('user-id').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    startGame();
+                }
+            });
         }
 
         function startGame() {

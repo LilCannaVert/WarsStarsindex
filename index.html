@@ -1110,7 +1110,7 @@
                                 <h3>Red Ship</h3>
                                 <p>Lives: 5</p>
                                 <p>Cost: 200</p>
-                                <button onclick="buyShip('redShip')" ${shopCurrency < 200 ? 'disabled' : ''}>Buy</button>
+                                <button onclick="buyShip('redShip')" ${shopCurrency < 200 || gameState.ownedShips.includes('redShip') ? 'disabled' : ''}>${gameState.ownedShips.includes('redShip') ? 'Owned' : 'Buy'}</button>
                             </div>
                         </div>
                         <div class="ship-item">
@@ -1119,7 +1119,7 @@
                                 <h3>Elon Ship</h3>
                                 <p>Lives: 7</p>
                                 <p>Cost: 400</p>
-                                <button onclick="buyShip('elonShip')" ${shopCurrency < 400 ? 'disabled' : ''}>Buy</button>
+                                <button onclick="buyShip('elonShip')" ${shopCurrency < 400 || gameState.ownedShips.includes('elonShip') ? 'disabled' : ''}>${gameState.ownedShips.includes('elonShip') ? 'Owned' : 'Buy'}</button>
                             </div>
                         </div>
                     </div>
@@ -1142,13 +1142,18 @@
 
         function buyShip(shipType) {
             const ship = ships[shipType];
-            if (shopCurrency >= ship.cost) {
+            if (shopCurrency >= ship.cost && !gameState.ownedShips.includes(shipType)) {
                 shopCurrency -= ship.cost;
                 gameState.ownedShips.push(shipType);
                 gameState.currentShip = shipType;
                 gameState.shopCurrency = shopCurrency;
                 saveGameState();
-                closeShop();
+                
+                // Обновляем содержимое модального окна
+                const shopModal = document.querySelector('.shop-modal');
+                if (shopModal) {
+                    showShop();
+                }
                 alert('Ship purchased successfully!');
             }
         }
@@ -1217,7 +1222,12 @@
         function chooseShip(shipType) {
             gameState.currentShip = shipType;
             saveGameState();
-            closeInventory();
+            
+            // Обновляем содержимое модального окна
+            const inventoryModal = document.querySelector('.inventory-modal');
+            if (inventoryModal) {
+                showInventory();
+            }
             alert('Ship selected successfully!');
         }
 

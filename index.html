@@ -44,6 +44,27 @@
             display: block;
             z-index: 100;
         }
+        #user-id-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+            z-index: 1;
+            background: transparent;
+        }
+        #user-id {
+            width: 100%;
+            font-size: 1.2em;
+            padding: 10px;
+            border: 2px solid cyan;
+            border-radius: 10px;
+            background-color: rgba(32, 39, 49, 0.5);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
         #menu button {
             padding: 10px 20px;
             margin: 10px;
@@ -93,6 +114,9 @@
     <div id="distance">Distance: 0</div>
     <div id="menu">
         <h1 id="menuTitle">Space Adventure</h1>
+        <div id="user-id-container">
+            <input type="text" id="user-id" placeholder="Enter your login" maxlength="20">
+        </div>
         <button id="startButton">Start</button>
         <button id="statsButton">Statistics</button>
         <button id="shopButton">Shop</button>
@@ -132,6 +156,41 @@
         let speed = 3;
         let touchX = null;
         let touchY = null;
+
+        const gameState = {
+            userId: 'default',
+            score: 0,
+            lives: 3,
+            distance: 0,
+            shopCurrency: 0,
+            stats: [],
+            highScore: 0
+        };
+
+        function saveGameState() {
+            Object.entries(gameState).forEach(([key, value]) => {
+                localStorage.setItem(`${gameState.userId}-${key}`, JSON.stringify(value));
+            });
+        }
+
+        function loadGameState(userId) {
+            gameState.userId = userId;
+            const keys = Object.keys(gameState);
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(`${userId}-${key}`);
+                if (value !== null) {
+                    gameState[key] = JSON.parse(value);
+                }
+            });
+
+            // Обновляем значения в игре
+            score = gameState.score;
+            lives = gameState.lives;
+            distance = gameState.distance;
+            shopCurrency = gameState.shopCurrency;
+            stats = gameState.stats;
+        }
 
         const player = {
             x: canvas.width / 2,
@@ -228,7 +287,10 @@
                 ) {
                     lives--;
                     obstacles.splice(index, 1);
-                    if (lives <= 0) endGame();
+                    if (lives <= 0) {
+                        lives = 0; // Предотвращаем отрицательные жизни
+                        endGame();
+                    }
                 }
             });
         }
@@ -344,8 +406,20 @@
         function endGame() {
             gameRunning = false;
             stats.push({ score, distance });
+            
+            // Обновляем gameState перед сохранением
+            gameState.score = score;
+            gameState.lives = lives;
+            gameState.distance = distance;
+            gameState.shopCurrency = shopCurrency;
+            gameState.stats = stats;
+            gameState.highScore = Math.max(gameState.highScore, score);
+            
+            saveGameState();
+            
             document.getElementById('menu').style.display = 'block';
             document.getElementById('menuTitle').innerText = 'Game Over';
+            document.getElementById('user-id').value = gameState.userId;
         }
 
         function update() {
@@ -389,10 +463,19 @@
         }
 
         function startGame() {
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter your login first!');
+                return;
+            }
+
+            // Загружаем состояние игры для пользователя
+            loadGameState(userId);
+            
             gameRunning = true;
-            score = 0;
-            lives = 3;
-            distance = 0;
+            score = 0; // Сбрасываем счет для новой игры
+            lives = 3; // Сбрасываем жизни для новой игры
+            distance = 0; // Сбрасываем расстояние для новой игры
             obstacles.length = 0;
             bonuses.length = 0;
             lasers.length = 0;
@@ -416,11 +499,25 @@
         document.getElementById('startButton').addEventListener('click', startGame);
 
         document.getElementById('statsButton').addEventListener('click', () => {
-            alert(stats.map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}`).join('\n'));
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter your login first!');
+                return;
+            }
+            loadGameState(userId);
+            const statsText = stats.map(s => `Score: ${s.score}, Distance: ${Math.floor(s.distance)}`).join('\n');
+            const highScoreText = `High Score: ${gameState.highScore}`;
+            alert(`${highScoreText}\n\nGame History:\n${statsText}`);
         });
 
         document.getElementById('shopButton').addEventListener('click', () => {
-            alert(`Shop Currency: ${shopCurrency}`);
+            const userId = document.getElementById('user-id').value.trim();
+            if (!userId) {
+                alert('Please enter your login first!');
+                return;
+            }
+            loadGameState(userId);
+            alert(`Shop Currency: ${shopCurrency}\nHigh Score: ${gameState.highScore}`);
         });
 
         document.addEventListener('keydown', (e) => {

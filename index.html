@@ -449,6 +449,11 @@
             obstacles.length = 0;
             bonuses.length = 0;
             lasers.length = 0;
+            
+            // Сбрасываем позицию корабля в центр нижней части экрана
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - 100;
+            
             createObstacle();
             createBonus("laser");
             document.getElementById('menu').style.display = 'none';

@@ -112,9 +112,9 @@
     </style>
 </head>
 <body>
-    <div id="score">Score: 0</div>
-    <div id="lives">Lives: 3</div>
-    <div id="distance">Distance: 0</div>
+    <div id="score" class="hidden">Score: 0</div>
+    <div id="lives" class="hidden">Lives: 3</div>
+    <div id="distance" class="hidden">Distance: 0</div>
     <div id="menu">
         <h1 id="menuTitle">Space Adventure</h1>
         <div id="user-id-container">
@@ -125,7 +125,7 @@
         <button id="statsButton">Statistics</button>
         <button id="shopButton">Shop</button>
     </div>
-    <button id="shootButton">Fire</button>
+    <button id="shootButton" class="hidden">Fire</button>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -475,6 +475,12 @@
             player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height - 100;
             
+            // Показываем игровые элементы
+            document.getElementById('score').classList.remove('hidden');
+            document.getElementById('lives').classList.remove('hidden');
+            document.getElementById('distance').classList.remove('hidden');
+            document.getElementById('shootButton').classList.remove('hidden');
+            
             createObstacle();
             createBonus("laser");
             document.getElementById('menu').style.display = 'none';
@@ -502,6 +508,12 @@
             gameState.highScore = Math.max(gameState.highScore, score);
             
             saveGameState();
+            
+            // Скрываем игровые элементы
+            document.getElementById('score').classList.add('hidden');
+            document.getElementById('lives').classList.add('hidden');
+            document.getElementById('distance').classList.add('hidden');
+            document.getElementById('shootButton').classList.add('hidden');
             
             document.getElementById('menu').style.display = 'block';
             document.getElementById('menuTitle').innerText = 'Game Over';
